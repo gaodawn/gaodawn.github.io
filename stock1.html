@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票数据分析报告</title>
+    
+    <!-- 引入必要的CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    
+    <!-- 内联数据区 -->
+    <script>
+        // 样例数据（10条）
+        const sampleData = [
+            {"日期": "2020-08-03", "股票代码": 1, "开盘": 1791.48, "收盘": 1806.49, "最高": 1810.24, "最低": 1786.48, "成交量": 1445096, "成交额": 1954607000.0, "振幅": 1.34, "涨跌幅": 1.76, "涨跌额": 31.26, "换手率": 0.74},
+            {"日期": "2021-02-24", "股票代码": 1, "开盘": 2891.67, "收盘": 2877.92, "最高": 2906.67, "最低": 2872.92, "成交量": 2393255, "成交额": 3391384000.0, "振幅": 1.17, "涨跌幅": 1.01, "涨跌额": 28.75, "换手率": 1.23},
+            {"日期": "2021-09-08", "股票代码": 1, "开盘": 2535.36, "收盘": 2534.11, "最高": 2550.11, "最低": 2525.36, "成交量": 1350000, "成交额": 1875000000.0, "振幅": 0.98, "涨跌幅": -0.05, "涨跌额": -1.25, "换手率": 0.70},
+            {"日期": "2022-03-31", "股票代码": 1, "开盘": 3156.23, "收盘": 3183.73, "最高": 3215.48, "最低": 3145.23, "成交量": 2850000, "成交额": 4025000000.0, "振幅": 2.22, "涨跌幅": 0.87, "涨跌额": 27.50, "换手率": 1.47},
+            {"日期": "2022-10-25", "股票代码": 1, "开盘": 1786.23, "收盘": 1775.48, "最高": 1805.23, "最低": 1765.48, "成交量": 1950000, "成交额": 2715000000.0, "振幅": 2.23, "涨跌幅": -0.60, "涨跌额": -10.75, "换手率": 1.01},
+            {"日期": "2023-05-18", "股票代码": 1, "开盘": 1986.23, "收盘": 1975.48, "最高": 2005.23, "最低": 1965.48, "成交量": 1650000, "成交额": 2295000000.0, "振幅": 2.02, "涨跌幅": -0.54, "涨跌额": -10.75, "换手率": 0.85},
+            {"日期": "2023-12-08", "股票代码": 1, "开盘": 2256.24, "收盘": 2275.48, "最高": 2295.24, "最低": 2245.48, "成交量": 1850000, "成交额": 2590000000.0, "振幅": 2.19, "涨跌幅": 0.85, "涨跌额": 19.24, "换手率": 0.96},
+            {"日期": "2024-07-02", "股票代码": 1, "开盘": 1616.83, "收盘": 1635.48, "最高": 1655.23, "最低": 1605.48, "成交量": 2250000, "成交额": 3150000000.0, "振幅": 3.09, "涨跌幅": 1.15, "涨跌额": 18.65, "换手率": 1.16},
+            {"日期": "2025-01-21", "股票代码": 1, "开盘": 1320.53, "收盘": 1345.48, "最高": 1365.23, "最低": 1314.28, "成交量": 3250000, "成交额": 4485000000.0, "振幅": 3.85, "涨跌幅": 1.89, "涨跌额": 24.95, "换手率": 1.68},
+            {"日期": "2025-08-06", "股票代码": 1, "开盘": 1335.53, "收盘": 1323.03, "最高": 1345.23, "最低": 1315.48, "成交量": 1750000, "成交额": 2415000000.0, "振幅": 2.23, "涨跌幅": -0.93, "涨跌额": -12.50, "换手率": 0.90}
+        ];
+
+        // 涨跌幅分布数据
+        const histogramData = {
+            labels: ['-10~-5%', '-5~-3%', '-3~-2%', '-2~-1%', '-1~-0.5%', '-0.5~0%', '0~0.5%', '0.5~1%', '1~2%', '2~3%', '3~5%', '5~10%'],
+            data: [0, 2, 18, 102, 167, 230, 245, 176, 134, 38, 7, 0]
+        };
+
+        // 技术指标统计数据
+        const techStats = {
+            priceRange: { min: 1323.03, max: 3256.73, avg: 1957.30 },
+            volatility: { maxUp: 9.02, maxDown: -7.92, std: 454.19 },
+            performance: { upDays: 543, downDays: 629, flatDays: 44 },
+            volume: { avgVolume: 1120056, avgTurnover: 0.58 }
+        };
+    </script>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <!-- 页面头部 -->
+    <header class="bg-white shadow-lg border-b border-blue-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-600 p-3 rounded-xl">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">股票数据分析报告</h1>
+                        <p class="text-gray-600 mt-1">数据周期：2020年8月 - 2025年8月</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-500">总交易日</div>
+                    <div class="text-2xl font-bold text-blue-600">1,216</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 关键指标卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-100 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">价格区间</p>
+                        <p class="text-2xl font-bold text-gray-900">1,323 - 3,257</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <i class="fas fa-dollar-sign text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-100 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">最大单日涨幅</p>
+                        <p class="text-2xl font-bold text-green-600">+9.02%</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <i class="fas fa-arrow-up text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-100 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">最大单日跌幅</p>
+                        <p class="text-2xl font-bold text-red-600">-7.92%</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-lg">
+                        <i class="fas fa-arrow-down text-red-600"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-100 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">上涨天数占比</p>
+                        <p class="text-2xl font-bold text-blue-600">44.7%</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i class="fas fa-percentage text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 样例数据表格 -->
+        <div class="bg-white rounded-xl shadow-lg mb-8 border border-blue-100">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-table text-blue-600 mr-3"></i>
+                    样例数据
+                </h2>
+                <p class="text-gray-600 text-sm mt-1">以下是股票数据的10条代表性记录</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">开盘</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">收盘</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最高</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最低</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">涨跌幅</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">成交量</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sampleDataTable" class="bg-white divide-y divide-gray-200">
+                        <!-- 数据将通过JavaScript填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 涨跌幅分布直方图 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
+                    涨跌幅分布
+                </h3>
+                <div class="relative h-80">
+                    <canvas id="histogramChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 涨跌天数分布饼图 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-chart-pie text-green-600 mr-3"></i>
+                    涨跌天数分布
+                </h3>
+                <div class="relative h-80">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技术指标分析 -->
+        <div class="bg-white rounded-xl shadow-lg p-8 border border-blue-100">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-chart-line text-blue-600 mr-3"></i>
+                技术指标分析
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">价格特征</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">历史最低价</span>
+                            <span class="font-bold text-red-600">1,323.03</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">历史最高价</span>
+                            <span class="font-bold text-green-600">3,256.73</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">平均收盘价</span>
+                            <span class="font-bold text-blue-600">1,957.30</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">交易特征</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">平均成交量</span>
+                            <span class="font-bold text-purple-600">112万股</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">平均换手率</span>
+                            <span class="font-bold text-orange-600">0.58%</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">价格波动率</span>
+                            <span class="font-bold text-indigo-600">454.19</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据总结 -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-8 text-white mt-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center">
+                <i class="fas fa-lightbulb mr-3"></i>
+                数据分析总结
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">📈 价格趋势分析</h3>
+                    <p class="text-blue-100 leading-relaxed">
+                        该股票在2020年8月至2025年8月期间展现出较大的波动性。价格区间从1,323.03元到3,256.73元，
+                        波动幅度达到146%。平均收盘价为1,957.30元，标准差为454.19，表明价格波动较为剧烈。
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">📊 交易表现分析</h3>
+                    <p class="text-blue-100 leading-relaxed">
+                        在1,216个交易日中，上涨天数543天（44.7%），下跌天数629天（51.7%），平盘天数44天（3.6%）。
+                        最大单日涨幅为9.02%，最大单日跌幅为-7.92%，显示出较高的日内波动性。
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">💹 风险特征分析</h3>
+                    <p class="text-blue-100 leading-relaxed">
+                        该股票具有较高的投资风险，价格波动较大。从涨跌幅分布来看，大多数交易日的涨跌幅集中在-1%到1%之间，
+                        但极端行情出现频率相对较低，适合有一定风险承受能力的投资者。
+                    </p>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">📉 投资建议</h3>
+                    <p class="text-blue-100 leading-relaxed">
+                        建议投资者采取波段操作策略，利用价格波动进行交易。关注成交量变化，
+                        平均成交量112万股可作为判断市场活跃度的参考指标。同时密切关注市场整体环境变化对股价的影响。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-600 items-center space-x-3">
+                <p class="text-center small">Copyright© WoLoveAI 2024-2025. All rights reserved.&nbsp;&nbsp;<a href="https://beian.miit.gov.cn/" target="_blank">豫ICP备2024100285号-2</a>&nbsp;&nbsp;<a href="https://beian.mps.gov.cn/#/query/webSearch?code=41030502001016" rel="noreferrer" target="_blank">豫公网安备41030502001016</a></p> 
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 填充样例数据表格
+        function populateSampleTable() {
+            const tableBody = document.getElementById('sampleDataTable');
+            sampleData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 transition-colors';
+                
+                const changeClass = row.涨跌幅 > 0 ? 'text-green-600' : row.涨跌幅 < 0 ? 'text-red-600' : 'text-gray-600';
+                const changeIcon = row.涨跌幅 > 0 ? '↑' : row.涨跌幅 < 0 ? '↓' : '→';
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.日期}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.开盘.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.收盘.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">${row.最高.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">${row.最低.toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${changeClass}">${changeIcon} ${Math.abs(row.涨跌幅).toFixed(2)}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${row.成交量.toLocaleString()}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // 创建涨跌幅分布直方图
+        function createHistogramChart() {
+            const ctx = document.getElementById('histogramChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: histogramData.labels,
+                    datasets: [{
+                        label: '交易天数',
+                        data: histogramData.data,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 50
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 创建涨跌天数分布饼图
+        function createPieChart() {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['上涨天数', '下跌天数', '平盘天数'],
+                    datasets: [{
+                        data: [techStats.performance.upDays, techStats.performance.downDays, techStats.performance.flatDays],
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(156, 163, 175, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(156, 163, 175, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            populateSampleTable();
+            createHistogramChart();
+            createPieChart();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026元宵节猜灯谜</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #ffd700, #ff8c00, #ff4500);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #d4af37;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(to right, #d4af37, #ffd700);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .riddle-container {
+            background: linear-gradient(135deg, #fff8dc, #f5deb3);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 3px solid #d4af37;
+            position: relative;
+        }
+        
+        .riddle-text {
+            font-size: 1.4em;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #8b4513;
+            line-height: 1.6;
+        }
+        
+        .input-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"] {
+            padding: 12px 15px;
+            border: 2px solid #d4af37;
+            border-radius: 25px;
+            font-size: 16px;
+            width: 200px;
+            text-align: center;
+        }
+        
+        .feedback {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            min-height: 25px;
+        }
+        
+        .correct {
+            color: #2e8b57;
+            font-weight: bold;
+        }
+        
+        .incorrect {
+            color: #dc143c;
+            font-weight: bold;
+        }
+        
+        .answer-section {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #d4af37;
+        }
+        
+        .show-answer-btn {
+            background: linear-gradient(to right, #8b4513, #a0522d);
+        }
+        
+        .answer-display {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #8b4513;
+            font-weight: bold;
+        }
+        
+        .progress {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #8b4513;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-bottom: 20px;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .stat-item {
+            font-size: 1.1em;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #d4af37;
+            font-size: 1.3em;
+        }
+        
+        .light-icon {
+            position: absolute;
+            font-size: 2em;
+            opacity: 0.3;
+        }
+        
+        .light-icon:nth-child(1) { top: 10px; left: 10px; }
+        .light-icon:nth-child(2) { top: 10px; right: 10px; }
+        .light-icon:nth-child(3) { bottom: 10px; left: 10px; }
+        .light-icon:nth-child(4) { bottom: 10px; right: 10px; }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .riddle-text {
+                font-size: 1.2em;
+            }
+            
+            input[type="text"] {
+                width: 150px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏮 2026元宵节猜灯谜 🏮</h1>
+        
+        <div class="stats">
+            <div class="stat-item">
+                已答：<span id="answered-count" class="stat-value">0</span>/100
+            </div>
+            <div class="stat-item">
+                正确：<span id="correct-count" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                错误：<span id="incorrect-count" class="stat-value">0</span>
+            </div>
+        </div>
+        
+        <div class="progress">
+            进度：<span id="progress-percent">0</span>%
+        </div>
+        
+        <div class="riddle-container">
+            <div class="light-icon">🏮</div>
+            <div class="light-icon">🏮</div>
+            <div class="light-icon">🏮</div>
+            <div class="light-icon">🏮</div>
+            
+            <div class="riddle-text" id="riddle-text"></div>
+            
+            <div class="input-container">
+                <input type="text" id="answer-input" placeholder="请输入答案" maxlength="10">
+                <button onclick="checkAnswer()">提交</button>
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+            
+            <div class="answer-section">
+                <button class="show-answer-btn" onclick="showAnswer()">查看答案</button>
+                <div class="answer-display" id="answer-display"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="nextRiddle()">下一题</button>
+            <button onclick="previousRiddle()">上一题</button>
+            <button onclick="randomRiddle()">随机题目</button>
+            <button onclick="resetGame()">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        // 灯谜数据
+        const riddles = [
+            { question: "小时四只脚，大时两只脚，老时三只脚", answer: "人" },
+            { question: "红口袋，绿口袋，有人怕，有人爱", answer: "辣椒" },
+            { question: "身穿绿衣裳，肚里水汪汪，生的儿子多，个个黑脸膛", answer: "西瓜" },
+            { question: "一个小姑娘，坐在水中央，身穿粉红袄，阵阵放清香", answer: "荷花" },
+            { question: "说它是虎它不像，金钱印在黄袄上，站在山上吼一声，吓跑猴子吓跑狼", answer: "老虎" },
+            { question: "头戴红帽穿白衣，每天催人早早起", answer: "公鸡" },
+            { question: "身体细长，兄弟成双，光爱吃菜，不爱喝汤", answer: "筷子" },
+            { question: "有头没有颈，身上冷冰冰，有翅不能飞，无脚也能行", answer: "鱼" },
+            { question: "小时着黑衣，大时穿绿袍，水里过日子，岸上来睡觉", answer: "水稻" },
+            { question: "一物生来真奇怪，肚皮下面长口袋，孩子袋里吃和睡，跑得不快跳得快", answer: "袋鼠" },
+            { question: "说它小，下边大，说它大，上边小", answer: "尖" },
+            { question: "身体白如雪，嘴儿尖又长，尾巴像把勺，倒挂把虫捉", answer: "燕子" },
+            { question: "兄弟七八个，围着柱子坐，大家一分手，衣服就扯破", answer: "蒜" },
+            { question: "颜色白如雪，身子硬如铁，一日洗三遍，夜晚柜中歇", answer: "碗" },
+            { question: "有面没有口，有脚没有手，虽有四只脚，自己不会走", answer: "桌子" },
+            { question: "白嫩小宝宝，洗澡吹泡泡，洗洗身体小，再洗不见了", answer: "肥皂" },
+            { question: "独木造高楼，没瓦没砖头，人在水下走，水在人上流", answer: "雨伞" },
+            { question: "身穿大皮袄，野草吃个饱，过了严冬天，献出一身毛", answer: "绵羊" },
+            { question: "一个小飞机，飞东又飞西，飞来又飞去，肚里有东西", answer: "蚊子" },
+            { question: "一个黑孩，从不开口，要是开口，掉出舌头", answer: "瓜子" },
+            { question: "麻屋子，红帐子，里面住个白胖子", answer: "花生" },
+            { question: "兄弟两人一般高，每日三餐不长膘", answer: "筷子" },
+            { question: "一个小马儿，四块瓦片盖，冬天暖洋洋，夏天晒太阳", answer: "床" },
+            { question: "一个老头子，天天跑直子，跑了一辈子，还没离开位子", answer: "钟表" },
+            { question: "小小诸葛亮，独坐军中帐，摆下八卦阵，专捉飞来将", answer: "蜘蛛" },
+            { question: "一个黑孩，从不开口，要是开口，掉出舌头", answer: "瓜子" },
+            { question: "白天一起玩，夜间一块眠，到老不分散，人间好因缘", answer: "鞋子" },
+            { question: "有风不动无风动，不动无风动有风", answer: "扇子" },
+            { question: "身披花棉袄，唱歌呱呱叫，田里捉害虫，丰收立功劳", answer: "青蛙" },
+            { question: "头戴红帽身穿白，每天起床试啼鸣", answer: "公鸡" },
+            { question: "圆圆脑袋一座山，兄弟许多住里边，每天请他们出工，回来个个泪水涟", answer: "洋葱" },
+            { question: "小小士兵排成行，头顶钢盔身着甲，冬天寒风吹过来，挺立不倒真坚强", answer: "松树" },
+            { question: "一只船儿两头翘，只载货物不载人，风平浪静开得快，惊涛骇浪开不动", answer: "月亮" },
+            { question: "一个姑娘懒洋洋，每天坐在水中央，穿着一件绿纱裙，风吹过来阵阵香", answer: "荷花" },
+            { question: "红红脸蛋像苹果，切开以后水当当", answer: "苹果" },
+            { question: "一个小池塘，养了许多鱼，主人常来看，就是不投食", answer: "眼睛" },
+            { question: "小小诸葛亮，稳坐中军帐，摆布八卦阵，专捉飞来将", answer: "蜘蛛" },
+            { question: "兄弟几个真和气，天天并肩坐一起，少时喜欢绿衣裳，老来都穿黄色衣", answer: "香蕉" },
+            { question: "一个老公公，面孔红彤彤，晴天早早起，按时来上工", answer: "太阳" },
+            { question: "一个小盒子，装满黑珠子，一生勤劳动，总是替人忙", answer: "缝纫机" },
+            { question: "身体细细长又长，天生爱美俏姑娘，爱穿红来爱穿绿，绣出美丽好花样", answer: "针线" },
+            { question: "一个小孩生得俏，头上戴顶帽，冬天暖和和，夏天凉爽爽", answer: "帽子" },
+            { question: "一个小马儿，没头没脑跑，白天转圈圈，晚上就睡觉", answer: "自行车" },
+            { question: "一个大肚汉，天天吃东西，一天不吃饿得慌，两天不吃饿死它", answer: "炉灶" },
+            { question: "一个小盒子，四个小轮子，有时开进去，有时开出来", answer: "汽车" },
+            { question: "一个大怪物，有头没有嘴，有脚没有手，专吃脏东西", answer: "洗衣机" },
+            { question: "一个大房间，有门没有窗，冬天暖洋洋，夏天凉爽爽", answer: "冰箱" },
+            { question: "一个小盒子，能写又能画，千里传音信，眨眼便到达", answer: "手机" },
+            { question: "一个大怪物，有头没有嘴，有眼不会看，有耳不会听", answer: "电视" },
+            { question: "一个小马儿，没有头和尾，天天跑来跑去，从不累不累", answer: "扫帚" },
+            { question: "一个大怪物，有头没有嘴，专吃电和饭，工作不知累", answer: "电脑" },
+            { question: "一个小盒子，能装千种物，打开看世界，闭上便休息", answer: "书包" },
+            { question: "一个大怪物，有头没有嘴，专吃纸和笔，吐出字和画", answer: "打印机" },
+            { question: "一个小马儿，四条腿儿跑，不用饲料喂，走得快又好", answer: "自行车" },
+            { question: "一个大怪物，有头没有嘴，专吃脏衣服，吐出干净来", answer: "洗衣机" },
+            { question: "一个小盒子，能装千种味，打开尝一尝，酸甜苦辣咸", answer: "嘴巴" },
+            { question: "一个大怪物，有头没有嘴，专吃垃圾废，保护环境美", answer: "垃圾桶" },
+            { question: "一个小马儿，没有头和尾，天天跑来跑去，专吃灰尘土", answer: "拖把" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，照亮千万家", answer: "电灯" },
+            { question: "一个小盒子，装满星星点，黑夜不害怕，处处亮闪闪", answer: "火柴" },
+            { question: "一个大怪物，有头没有嘴，专吃污水浊，吐出清泉来", answer: "净水器" },
+            { question: "一个小马儿，四条腿儿站，上面铺软布，人来就躺安", answer: "床" },
+            { question: "一个大怪物，有头没有嘴，专吃冷水热，温暖送万家", answer: "热水器" },
+            { question: "一个小盒子，能装千万物，打开看世界，闭上便休息", answer: "眼睛" },
+            { question: "一个大怪物，有头没有嘴，专吃灰尘土，家里变整洁", answer: "吸尘器" },
+            { question: "一个小马儿，没有头和尾，天天转圈圈，专磨五谷米", answer: "磨盘" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，声音传千里", answer: "喇叭" },
+            { question: "一个小盒子，装满千种味，闻一闻便知，酸甜苦辣咸", answer: "鼻子" },
+            { question: "一个大怪物，有头没有嘴，专吃阳光热，温暖送万家", answer: "太阳能板" },
+            { question: "一个小马儿，四条腿儿立，上面铺软垫，坐下便安逸", answer: "椅子" },
+            { question: "一个大怪物，有头没有嘴，专吃污垢腻，衣服变干净", answer: "肥皂" },
+            { question: "一个小盒子，能装千万声，打开听一听，各种音乐声", answer: "耳朵" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，冷冻保鲜鲜", answer: "冰箱" },
+            { question: "一个小马儿，没有头和尾，天天转圈圈，专打节拍子", answer: "鼓槌" },
+            { question: "一个大怪物，有头没有嘴，专吃污水浊，吐出清水来", answer: "洗衣机" },
+            { question: "一个小盒子，装满千种色，睁开看一看，世界多姿彩", answer: "眼睛" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，信息传万里", answer: "手机" },
+            { question: "一个小马儿，四条腿儿跑，不用加油料，环保又健康", answer: "自行车" },
+            { question: "一个大怪物，有头没有嘴，专吃阳光热，电力送万家", answer: "太阳能" },
+            { question: "一个小盒子，能装千万事，翻开看一看，古今中外知", answer: "书本" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，画面动起来", answer: "电视" },
+            { question: "一个小马儿，没有头和尾，天天转圈圈，专磨粮食粉", answer: "石磨" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，清洁又方便", answer: "微波炉" },
+            { question: "一个小盒子，装满千种香，闻一闻便知，春夏秋冬味", answer: "花朵" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，洗衣更轻松", answer: "洗衣机" },
+            { question: "一个小马儿，四条腿儿立，上面铺软垫，睡觉最舒适", answer: "床" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，食物变美味", answer: "电饭煲" },
+            { question: "一个小盒子，能装千万字，翻开看一看，知识无穷尽", answer: "书籍" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，冰镇又保鲜", answer: "冰箱" },
+            { question: "一个小马儿，没有头和尾，天天转圈圈，专扫灰尘土", answer: "扫帚" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，画面更清晰", answer: "显示器" },
+            { question: "一个小盒子，装满千种味，品一品便知，酸甜苦辣咸", answer: "舌头" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，音乐响四方", answer: "音响" },
+            { question: "一个小马儿，四条腿儿站，上面铺软布，坐下便安闲", answer: "沙发" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，清洁更省力", answer: "吸尘器" },
+            { question: "一个小盒子，能装千万象，翻开看一看，天地万物知", answer: "镜子" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，计算速度快", answer: "计算机" },
+            { question: "一个小马儿，没有头和尾，天天转圈圈，专磨五谷精", answer: "磨面机" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，衣物更平整", answer: "熨斗" },
+            { question: "一个小盒子，装满千种声，听一听便知，风雨雷电鸣", answer: "耳朵" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，空气更清新", answer: "空气净化器" },
+            { question: "一个小马儿，四条腿儿跑，不用加油耗，环保又节能", answer: "电动车" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，食物更营养", answer: "蒸蛋器" },
+            { question: "一个小盒子，能装千万景，打开看一看，山水花鸟现", answer: "相册" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，通讯更便捷", answer: "电话" },
+            { question: "一个小马儿，没有头和尾，天天转圈圈，专切瓜果菜", answer: "菜刀" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，衣物更柔软", answer: "柔顺剂" },
+            { question: "一个小盒子，装满千种情，翻开看一看，喜怒哀乐生", answer: "表情" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，食物更安全", answer: "消毒柜" },
+            { question: "一个小马儿，四条腿儿立，上面铺软垫，休息最惬意", answer: "躺椅" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，照明更明亮", answer: "台灯" },
+            { question: "一个小盒子，能装千万梦，闭上眼睛看，奇思妙想来", answer: "大脑" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，信息更丰富", answer: "网络" },
+            { question: "一个小马儿，没有头和尾，天天转圈圈，专打文字稿", answer: "键盘" },
+            { question: "一个大怪物，有头没有嘴，专吃电力饭，食物更美味", answer: "电烤箱" }
+        ];
+
+        let currentRiddleIndex = 0;
+        let answeredCount = 0;
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let answeredRiddles = new Set();
+
+        // 初始化游戏
+        function initGame() {
+            currentRiddleIndex = Math.floor(Math.random() * riddles.length);
+            updateRiddle();
+            updateStats();
+        }
+
+        // 更新灯谜显示
+        function updateRiddle() {
+            const riddleText = document.getElementById('riddle-text');
+            const answerInput = document.getElementById('answer-input');
+            const feedback = document.getElementById('feedback');
+            const answerDisplay = document.getElementById('answer-display');
+            
+            riddleText.textContent = riddles[currentRiddleIndex].question;
+            answerInput.value = '';
+            feedback.textContent = '';
+            answerDisplay.textContent = '';
+        }
+
+        // 检查答案
+        function checkAnswer() {
+            const answerInput = document.getElementById('answer-input');
+            const feedback = document.getElementById('feedback');
+            const userAnswer = answerInput.value.trim();
+            const correctAnswer = riddles[currentRiddleIndex].answer;
+            
+            if (!userAnswer) {
+                feedback.textContent = '请输入答案！';
+                feedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            if (!answeredRiddles.has(currentRiddleIndex)) {
+                answeredRiddles.add(currentRiddleIndex);
+                answeredCount++;
+            }
+            
+            if (userAnswer === correctAnswer) {
+                feedback.textContent = '恭喜答对了！🎉';
+                feedback.className = 'feedback correct';
+                if (!answeredRiddles.has(currentRiddleIndex) || answeredRiddles.size === 1) {
+                    correctCount++;
+                }
+            } else {
+                feedback.textContent = '答案不对哦，再想想吧！💡';
+                feedback.className = 'feedback incorrect';
+                if (!answeredRiddles.has(currentRiddleIndex) || answeredRiddles.size === 1) {
+                    incorrectCount++;
+                }
+            }
+            
+            updateStats();
+        }
+
+        // 显示答案
+        function showAnswer() {
+            const answerDisplay = document.getElementById('answer-display');
+            answerDisplay.textContent = `答案是：${riddles[currentRiddleIndex].answer}`;
+        }
+
+        // 下一题
+        function nextRiddle() {
+            currentRiddleIndex = (currentRiddleIndex + 1) % riddles.length;
+            updateRiddle();
+        }
+
+        // 上一题
+        function previousRiddle() {
+            currentRiddleIndex = (currentRiddleIndex - 1 + riddles.length) % riddles.length;
+            updateRiddle();
+        }
+
+        // 随机题目
+        function randomRiddle() {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * riddles.length);
+            } while (newIndex === currentRiddleIndex && riddles.length > 1);
+            currentRiddleIndex = newIndex;
+            updateRiddle();
+        }
+
+        // 重新开始
+        function resetGame() {
+            currentRiddleIndex = Math.floor(Math.random() * riddles.length);
+            answeredCount = 0;
+            correctCount = 0;
+            incorrectCount = 0;
+            answeredRiddles.clear();
+            updateRiddle();
+            updateStats();
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('answered-count').textContent = answeredCount;
+            document.getElementById('correct-count').textContent = correctCount;
+            document.getElementById('incorrect-count').textContent = incorrectCount;
+            const progressPercent = Math.round((answeredCount / riddles.length) * 100);
+            document.getElementById('progress-percent').textContent = progressPercent;
+        }
+
+        // 监听回车键
+        document.getElementById('answer-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>

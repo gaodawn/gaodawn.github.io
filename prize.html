@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸运大转盘</title>
+    <style>
+        :root {
+            --primary-color: #e74c3c;
+            --secondary-color: #f1c40f;
+            --bg-color: #2c3e50;
+            --text-color: #ecf0f1;
+            --wheel-size: 650px;
+            /* 转盘大小 */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: radial-gradient(circle, #34495e 0%, #1a252f 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            font-size: 2rem;
+        }
+
+        /* 转盘容器 */
+        .wheel-container {
+            position: relative;
+            width: var(--wheel-size);
+            height: var(--wheel-size);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 0 10px rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        /* 指针 */
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 50px;
+            z-index: 10;
+            filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .pointer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #e74c3c;
+        }
+
+        .pointer-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #fff 30%, #f1c40f 100%);
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #d35400;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* 画布 */
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            /* 关键：缓动函数 */
+        }
+
+        /* 按钮样式 (如果不想用中间点击，可以用外部按钮) */
+        .spin-btn {
+            margin-top: 30px;
+            padding: 12px 40px;
+            font-size: 1.2rem;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .spin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .spin-btn:active {
+            transform: translateY(1px);
+        }
+
+        .spin-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 结果弹窗 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: #333;
+            max-width: 80%;
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            color: #e74c3c;
+            margin-top: 0;
+        }
+
+        .modal p {
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+
+        .close-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 400px) {
+            :root {
+                --wheel-size: 280px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>✨ 幸运大转盘 ✨</h1>
+
+    <div class="wheel-container">
+        <!-- 指针 -->
+        <div class="pointer"></div>
+        <!-- 转盘画布 -->
+        <canvas id="wheelCanvas" width="700" height="700"></canvas>
+        <!-- 中心点击区域 -->
+        <div class="pointer-center" id="centerBtn">GO</div>
+    </div>
+
+    <button class="spin-btn" id="spinBtn">开始抽奖</button>
+
+    <!-- 结果弹窗 -->
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <h2>🎉 恭喜您！</h2>
+            <p id="resultText">获得奖品：XXX</p>
+            <button class="close-btn" id="closeModal">确定</button>
+        </div>
+    </div>
+
+    <script>
+        // ================= 配置区域 =================
+        const prizes = [
+            { text: "特斯拉ModelY", color: "#FFD700", textColor: "#fff" }, // 金色
+            { text: "谢谢参与", color: "#ffffff", textColor: "#333" },
+            { text: "小米YU9", color: "#e74c3c", textColor: "#fff" },
+            { text: "再来一次", color: "#ffffff", textColor: "#333" },
+            { text: "Iphone 17 max", color: "#3498db", textColor: "#fff" },
+            { text: "祝你好运", color: "#ffffff", textColor: "#333" },
+            { text: "华为笔记本", color: "#9b59b6", textColor: "#fff" },
+            { text: "神秘大奖", color: "#2ecc71", textColor: "#fff" }
+        ];
+        // ===========================================
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spinBtn');
+        const centerBtn = document.getElementById('centerBtn');
+        const modal = document.getElementById('resultModal');
+        const resultText = document.getElementById('resultText');
+        const closeModal = document.getElementById('closeModal');
+
+        let currentRotation = 0;
+        let isSpinning = false;
+        const numSegments = prizes.length;
+        const arcSize = (2 * Math.PI) / numSegments;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = canvas.width / 2;
+
+        // 绘制转盘
+        function drawWheel() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < numSegments; i++) {
+                const angle = i * arcSize;
+
+                // 绘制扇形
+                ctx.beginPath();
+                ctx.fillStyle = prizes[i].color;
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arcSize);
+                ctx.lineTo(centerX, centerY);
+                ctx.fill();
+                ctx.stroke();
+
+                // 绘制文字
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = prizes[i].textColor;
+                ctx.font = "bold 36px Arial";
+                ctx.fillText(prizes[i].text, radius - 40, 10);
+                ctx.restore();
+            }
+        }
+
+        // 旋转逻辑
+        function rotateWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            centerBtn.style.cursor = 'default';
+
+            // 随机旋转圈数 (5-10圈) + 随机角度
+            const randomOffset = Math.floor(Math.random() * 360);
+            const extraSpins = 360 * (5 + Math.floor(Math.random() * 5));
+            const totalDegrees = extraSpins + randomOffset;
+
+            // 更新当前旋转角度（累加，避免重置）
+            currentRotation += totalDegrees;
+
+            // 应用 CSS 旋转
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            // 等待动画结束 (4秒，与 CSS transition 一致)
+            setTimeout(() => {
+                showResult(currentRotation);
+                isSpinning = false;
+                spinBtn.disabled = false;
+                centerBtn.style.cursor = 'pointer';
+            }, 4000);
+        }
+
+        // 计算结果
+        function showResult(rotation) {
+            // 计算实际角度 (取模 360)
+            const actualRotation = rotation % 360;
+
+            // 指针在顶部 (270度 或 -90度)，但我们的 Canvas 0度在右侧 (3点钟方向)
+            // 需要转换坐标系。
+            // 简单算法：
+            // 1. 转盘顺时针旋转了 actualRotation 度。
+            // 2. 相当于指针逆时针转了 actualRotation 度。
+            // 3. 指针初始指向 270度 (顶部)。
+            // 4. 最终指针指向的角度 = (270 - actualRotation) % 360。
+            // 5. 如果结果是负数，加 360。
+
+            let pointerAngle = (270 - actualRotation) % 360;
+            if (pointerAngle < 0) pointerAngle += 360;
+
+            // 计算索引
+            // 每个扇形的大小是 360 / numSegments
+            const segmentAngle = 360 / numSegments;
+            const index = Math.floor(pointerAngle / segmentAngle);
+
+            const winner = prizes[index];
+
+            resultText.textContent = `获得奖品：${winner.text}`;
+            modal.classList.add('show');
+
+            // 简单的庆祝特效 (可选)
+            console.log(`中奖索引: ${index}, 奖品: ${winner.text}`);
+        }
+
+        // 事件监听
+        spinBtn.addEventListener('click', rotateWheel);
+        centerBtn.addEventListener('click', rotateWheel);
+
+        closeModal.addEventListener('click', () => {
+            modal.classList.remove('show');
+        });
+
+        // 初始化绘制
+        drawWheel();
+
+    </script>
+</body>
+
+</html>
